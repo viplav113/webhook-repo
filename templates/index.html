@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>GitHub Events Monitor</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .event { background: #f8f9fa; border-left: 4px solid #4285f4; padding: 15px; margin: 10px 0; border-radius: 4px; }
+        .timestamp { color: #5f6368; font-size: 0.9em; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <h1>GitHub Activity Stream</h1>
+    <div id="events-container"></div>
+
+    <script>
+        function formatEvent(event) {
+            const date = new Date(event.timestamp);
+            const formattedDate = date.toLocaleDateString('en-US', { 
+                day: 'numeric', 
+                month: 'long', 
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'UTC'
+            }) + ' UTC';
+            
+            switch(event.action) {
+                case 'PUSH':
+                    return `${event.author} pushed to ${event.to_branch} on ${formattedDate}`;
+                case 'PULL_REQUEST':
+                    return `${event.author} submitted a pull request from ${event.from_branch} to ${event.to_branch} on ${formattedDate}`;
+                case 'MERGE':
+                    return `${event.author} merged branch ${event.from_branch} to ${event.to_branch} on ${formattedDate}`;
+                default:
+                    return `Unknown action: ${event.action}`;
+            }
+        }
+
+        function updateEvents() {
+            fetch('/events')
+                .then(response => response.json())
+                .then(data => {
+                    const container = document.getElementById('events-container');
+                    container.innerHTML = '';
+                    
+                    data.forEach(event => {
+                        const eventDiv = document.createElement('div');
+                        eventDiv.className = 'event';
+                        eventDiv.textContent = formatEvent(event);
+                        container.appendChild(eventDiv);
+                    });
+                });
+        }
+
+        // Update every 15 seconds
+        setInterval(updateEvents, 15000);
+        updateEvents(); // Initial load
+    </script>
+</body>
+</html>
